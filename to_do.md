@@ -1,26 +1,26 @@
-# 🚀 Project To-Do List: Web Application Development with SQLite and 2FA
+# 🚀 Project To-Do List:🔐 SecureAuth-A Two-Factor Authentication Web Application
 
 ## Deliverable 1: Environment Setup and Database Schema Definition
 **Goal**: Set up the development environment and define the database schema.
 
-### 👨‍💻 Person 1: Husnain – Environment Setup
+### 👨‍💻 Husnain – Environment Setup
 - [ ] Install Python 3.8 or newer.
 - [ ] Install and configure Flask.
 - [ ] Create a Python virtual environment.
 - [ ] Install required libraries (Flask, bcrypt, smtplib, SQLite).
 
-### 👩‍💻 Person 2: Isma – SQLite Database Setup
+### 👩‍💻 Isma – SQLite Database Setup
 - [ ] Install and configure SQLite.
 - [ ] Create the project database.
 - [ ] Ensure Flask is connected to the SQLite database.
 
-### 👩‍💻 Person 3: Khadijah – Database Schema Definition
+### 👩‍💻 Khadijah – Database Schema Definition
 - [ ] Define the `users` table schema:
   - [ ] Columns: `user_id` (primary key), `username`, `email`, `hashed_password`, `registration_date`.
 - [ ] Define the `sessions` table schema:
   - [ ] Columns: `session_id`, `user_id` (foreign key), `session_token`, `expires_at`.
 
-### 👨‍💻 Person 4: Nibras – Initial Testing and Validation
+### 👨‍💻 Nibras – Initial Testing and Validation
 - [ ] Test SQLite database connection with Flask.
 - [ ] Implement a basic user registration form to insert data into the `users` table.
 - [ ] Ensure tables and fields are correctly created.
@@ -30,22 +30,22 @@
 ## Deliverable 2: Backend Development for User Registration and Login
 **Goal**: Implement secure user registration, password storage, and user login.
 
-### 👨‍💻 Person 1: Husnain – User Registration
+### 👨‍💻 Husnain – User Registration
 - [ ] Implement a form to register users (username, email, password).
 - [ ] Validate user inputs (e.g., valid email, strong password).
 - [ ] Verify email address through a confirmation link sent to the user’s email.
 
-### 👩‍💻 Person 2: Isma – Secure Password Storage
+### 👩‍💻 Isma – Secure Password Storage
 - [ ] Implement password hashing using bcrypt.
 - [ ] Ensure passwords are securely stored using salt and appropriate hashing techniques.
 - [ ] Test password storage by registering a few test users.
 
-### 👩‍💻 Person 3: Khadijah – User Login System
+### 👩‍💻 Khadijah – User Login System
 - [ ] Implement user login form (username and password).
 - [ ] Authenticate users using stored hashed passwords (compare hashed versions).
 - [ ] Set up error handling for incorrect login attempts.
 
-### 👨‍💻 Person 4: Nibras – Database Integration for Registration/Login
+### 👨‍💻 Nibras – Database Integration for Registration/Login
 - [ ] Implement database interactions for both registration and login (store/retrieve user data).
 - [ ] Store user details (hashed password) and email confirmation status in the database.
 - [ ] Test the login process using multiple test users.
@@ -55,22 +55,22 @@
 ## Deliverable 3: OTP Generation, Email Integration, and Two-Factor Authentication (2FA)
 **Goal**: Implement OTP-based two-factor authentication (2FA) using email.
 
-### 👨‍💻 Person 1: Husnain – OTP Generation
+### 👨‍💻 Husnain – OTP Generation
 - [ ] Implement a secure OTP generation system.
 - [ ] Generate a random OTP with a set expiration time (e.g., 5 minutes).
 - [ ] Ensure that OTPs are unique for each request.
 
-### 👩‍💻 Person 2: Isma – Email Integration for OTP
+### 👩‍💻 Isma – Email Integration for OTP
 - [ ] Integrate smtplib for sending OTP via email.
 - [ ] Configure SMTP settings securely in Flask to send the OTP.
 - [ ] Test email sending with a free SMTP provider (e.g., Gmail).
 
-### 👩‍💻 Person 3: Khadijah – OTP Verification
+### 👩‍💻 Khadijah – OTP Verification
 - [ ] Create a form where users can enter the OTP they received via email.
 - [ ] Implement verification of OTP, checking the expiry time.
 - [ ] Allow users to request a new OTP if the original expires.
 
-### 👨‍💻 Person 4: Nibras – OTP Session Management
+### 👨‍💻 Nibras – OTP Session Management
 - [ ] Store OTPs in the database alongside the user session.
 - [ ] Manage session state during login and OTP verification.
 - [ ] Implement error handling for incorrect OTP entries and expired OTPs.
@@ -80,22 +80,22 @@
 ## Deliverable 4: Frontend, Security Enhancements, and Final Testing
 **Goal**: Finalize the frontend interface, add security features, and conduct extensive testing.
 
-### 👨‍💻 Person 1: Husnain – Frontend Development
+### 👨‍💻 Husnain – Frontend Development
 - [ ] Create a simple user interface for registration, login, and OTP verification using HTML/CSS.
 - [ ] Implement secure forms with validation (e.g., email format, password strength).
 - [ ] Optional: Use Bootstrap for enhanced styling and layout.
 
-### 👩‍💻 Person 2: Isma – Security Features
+### 👩‍💻 Isma – Security Features
 - [ ] Implement rate limiting for login attempts and OTP requests (using Flask-Limiter).
 - [ ] Secure the application against common vulnerabilities like SQL injection, CSRF, and XSS.
 - [ ] Use secure cookies for session management.
 
-### 👩‍💻 Person 3: Khadijah – Session Management
+### 👩‍💻 Khadijah – Session Management
 - [ ] Ensure users stay logged in after OTP verification using secure sessions.
 - [ ] Implement logout functionality to terminate user sessions.
 - [ ] Test for session persistence after login.
 
-### 👨‍💻 Person 4: Nibras – Testing and Debugging
+### 👨‍💻 Nibras – Testing and Debugging
 - [ ] Perform functional testing of the complete system (user registration, login, OTP).
 - [ ] Conduct security testing to check for vulnerabilities.
 - [ ] Perform usability testing to ensure the interface is user-friendly.
