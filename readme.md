@@ -31,7 +31,7 @@ Welcome to **SecureAuth**, a robust authentication system designed to provide a 
 ### Step 1: Clone the repository.=
 First, clone the project repository from GitHub.
 ```bash
-git clone https://github.com/your-repo/secureauth.git
+git clone https://github.com/husnainsr/secureAuth.git
 cd secureauth
 ```
 ### Step 2: Create and activate a virtual environment.=

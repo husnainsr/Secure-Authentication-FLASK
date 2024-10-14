@@ -4,6 +4,7 @@
 **Goal**: Set up the development environment and define the database schema.
 
 ### 👨‍💻 Husnain – Environment Setup
+- [x] Github Repo Setup.
 - [ ] Install Python 3.8 or newer.
 - [ ] Install and configure Flask.
 - [ ] Create a Python virtual environment.
