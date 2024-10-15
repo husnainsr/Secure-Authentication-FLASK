@@ -81,6 +81,25 @@ def register():
         )
     ''')
 
+    # Insert new user into the 'users' table
+    sql = "INSERT INTO users (username, email, password_hash, registration_date) VALUES (?, ?, ?, ?)"
+    try:
+        cursor.execute(sql, (username, email, password_hash, registration_date))
+        user_id = cursor.lastrowid  # Get the ID of the newly inserted user
+        conn.commit()  # Ensure data is committed to the database
+
+        # Create a session for the newly registered user
+        session_created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        cursor.execute("INSERT INTO sessions (user_id, created_at) VALUES (?, ?)", (user_id, session_created_at))
+        conn.commit()  # Ensure session data is committed to the database
+
+        return jsonify({'message': 'User registered successfully!'})
+    except sqlite3.Error as e:
+        return jsonify({'error': str(e)})
+    finally:
+        cursor.close()
+        conn.close()
+
 
 if __name__ == '__main__':
     app.run(debug=True)
