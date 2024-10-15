@@ -1,39 +1,11 @@
-# from flask import Flask, render_template, request, redirect, url_for
-# import sqlite3
-
-# app = Flask(__name__)
-
-# # Configure SQLite database path
-# DATABASE = 'db.db'
-
-# # Function to connect to the database
-# def get_db_connection():
-#     conn = sqlite3.connect(DATABASE)
-#     conn.row_factory = sqlite3.Row  # To return rows as dictionaries
-#     return conn
-
-# # Example route to show database connectivity
-# @app.route('/')
-# def index():
-#     conn = get_db_connection()
-#     cursor = conn.cursor()
-#     cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")  # Show available tables
-#     tables = cursor.fetchall()
-#     conn.close()
-#     return render_template('index.html', tables=tables)
-
-# if __name__ == '__main__':
-#     app.run(debug=True)
-
-
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
-from datetime import datetime
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 
-# Set the absolute path to your SQLite database on the desktop
+# # Configure SQLite database path
 DB_PATH = os.path.join(os.path.expanduser('~'), 'Desktop', 'secure_auth.db')
 
 # Function to connect to SQLite Database
@@ -42,6 +14,7 @@ def connect_db():
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row  # Enable dictionary-like access to rows
     return connection
+
 
 # Route to render registration form
 @app.route('/')
