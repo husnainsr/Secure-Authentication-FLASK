@@ -11,20 +11,21 @@
 - [x] Install required libraries (Flask, bcrypt, smtplib, SQLite).
 
 ### 👩‍💻 Isma – SQLite Database Setup
-- [ ] Install and configure SQLite.
-- [ ] Create the project database.
-- [ ] Ensure Flask is connected to the SQLite database.
+- [x] Install and configure SQLite.
+- [x] Create the project database.
+- [x] Ensure Flask is connected to the SQLite database.
+- [x] Add show all users webpage connected with database.
 
 ### 👩‍💻 Khadijah – Database Schema Definition
-- [ ] Define the `users` table schema:
-  - [ ] Columns: `user_id` (primary key), `username`, `email`, `hashed_password`, `registration_date`.
-- [ ] Define the `sessions` table schema:
-  - [ ] Columns: `session_id`, `user_id` (foreign key), `session_token`, `expires_at`.
+- [x] Define the `users` table schema:
+  - [x] Columns: `user_id` (primary key), `username`, `email`, `hashed_password`, `registration_date`.
+- [x] Define the `sessions` table schema:
+  - [x] Columns: `session_id`, `user_id` (foreign key), `session_token`, `expires_at`.
 
 ### 👨‍💻 Nibras – Initial Testing and Validation
-- [ ] Test SQLite database connection with Flask.
-- [ ] Implement a basic user registration form to insert data into the `users` table.
-- [ ] Ensure tables and fields are correctly created.
+- [x] Test SQLite database connection with Flask.
+- [x] Implement a basic user registration form to insert data into the `users` table.
+- [x] Ensure tables and fields are correctly created.
 
 ---
 
