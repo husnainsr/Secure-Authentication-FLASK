@@ -3,12 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flask App</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>All Registered Users</title>
 </head>
 <body>
-    <h1>Hello, Flask with Templates!</h1>
-    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <h1>All Registered Users</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Registration Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user['id'] }}</td>
+                <td>{{ user['username'] }}</td>
+                <td>{{ user['email'] }}</td>
+                <td>{{ user['registration_date'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Button to go back to the registration form -->
+    <br>
+    <form action="/">
+        <button type="submit">Go Back to Registration Form</button>
+    </form>
 </body>
 </html>

@@ -50,22 +50,7 @@ def connect_db():
 def index():
     return render_template('register.html')
 
-@app.route('/show_last_user', methods=['GET'])
-def show_last_user():
-    conn = connect_db()
-    cursor = conn.cursor()
 
-    # Fetch the last registered user from the 'users' table
-    cursor.execute('SELECT * FROM users ORDER BY id DESC LIMIT 1')
-    last_user = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
-
-    if last_user:
-        return render_template('user_table.html', user=last_user)
-    else:
-        return jsonify({'message': 'No users found'})
 
 # Route to register a new user and insert into the database
 @app.route('/register', methods=['POST'])
@@ -118,6 +103,22 @@ def register():
     finally:
         cursor.close()
         conn.close()
+@app.route('/show_all_users', methods=['GET'])
+def show_all_users():
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    # Fetch all users from the 'users' table
+    cursor.execute('SELECT * FROM users')
+    users = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    if users:
+        return render_template('index.html', users=users)
+    else:
+        return jsonify({'message': 'No users found'})
 
 if __name__ == '__main__':
     app.run(debug=True)
