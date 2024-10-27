@@ -135,7 +135,14 @@ def verify_email(token):
         print(f"Error verifying token: {e}")  # Debug print
         return render_template('verify.html', message="Verification link expired or invalid. Please register again.")
     
-    
+
+
+@app.route('/welcome')
+def welcome():
+
+   # Render the welcome page with a greeting message.
+    return render_template('welcome.html')
+
 
 @app.route('/show_all_users', methods=['GET'])
 def show_all_users():
