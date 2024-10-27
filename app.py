@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
 import sqlite3
 from datetime import datetime
 import os
@@ -8,6 +8,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
+import re
 
 load_dotenv()
 
@@ -16,15 +17,11 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 
 s = URLSafeTimedSerializer(app.secret_key)
-
-# Set the absolute path to your SQLite database on the desktop
 DB_PATH = os.path.join(os.path.expanduser('~'), 'Desktop', 'secure_auth.db')
 
-# Function to connect to SQLite Database
 def connect_db():
-    # Connect to the database stored on the desktop
     connection = sqlite3.connect(DB_PATH)
-    connection.row_factory = sqlite3.Row  # Enable dictionary-like access to rows
+    connection.row_factory = sqlite3.Row  
     return connection
 
 
@@ -65,7 +62,7 @@ def index():
     return render_template('register.html')
 
 def send_verification_email(email, token):
-    sender_email = "djbravochamp817@gmail.com"
+    sender_email = os.getenv("EMAIL")
     receiver_email = email
     subject = "Please confirm your email"
     link = url_for('verify_email', token=token, _external=True)
@@ -80,7 +77,8 @@ def send_verification_email(email, token):
 
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(sender_email, "kwih hngn jlbm njdt")  # Replace with actual email and password
+            PASSWORD=os.getenv("PASSWORD")
+            server.login(sender_email, PASSWORD)  
             server.sendmail(sender_email, receiver_email, message.as_string())
             print("Email sent successfully.")
     except smtplib.SMTPException as e:
@@ -93,8 +91,26 @@ def send_verification_email(email, token):
 def register():
     username = request.form['username']
     email = request.form['email']
-    password = request.form['password']  # Normally, you'd hash the password here
-    registration_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Capture current timestamp
+    password = request.form['password']  
+    registration_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  
+
+    # Password Requirenments
+    if len(password) < 8 or not re.search(r'[A-Z]', password) or not re.search(r'[a-z]', password) or not re.search(r'\d', password):
+        flash("Password must be at least 8 characters, contain uppercase and lowercase letters, and include a number.", "danger")
+        return render_template('register.html')
+    
+    # Email verification
+    email_pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+    if not re.match(email_pattern, email):
+        flash("Please enter a valid email address.", "danger")
+        return render_template('register.html')
+    
+    # Email Verification
+    email_pattern = r'^[a-zA-Z0-9_.+-]+@gmail\.com$'
+    if not re.match(email_pattern, email):
+        flash("Please enter a valid Gmail address (example@gmail.com).", "danger")
+        return render_template('register.html')
+
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
     setup_database()  # Ensure the database is set up before registering a user
@@ -108,9 +124,9 @@ def register():
         conn.commit()
 
         token = s.dumps(email, salt='email-confirm')
-        print(f"Token generated: {token}")  # Debug print
+        print(f"Token generated: {token}")  
         send_verification_email(email, token)
-
+        flash("Registration successful! Please check your email to verify your account.", "info")
         return render_template('register.html', message="Registration successful! Please check your email to verify your account.")
     except sqlite3.Error as e:
         return jsonify({'error': str(e)})
@@ -122,9 +138,8 @@ def register():
 @app.route('/verify/<token>')
 def verify_email(token):
     try:
-        # Set max_age to None to disable expiration
         email = s.loads(token, salt='email-confirm', max_age=None)  
-        print(f"Token valid. Email: {email}")  # Debug print
+        print(f"Token valid. Email: {email}")  
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute("UPDATE users SET is_verified = 1 WHERE email = ?", (email,))
@@ -132,15 +147,13 @@ def verify_email(token):
 
         return render_template('verify.html', message="Email verified successfully! You may now log in.")
     except Exception as e:
-        print(f"Error verifying token: {e}")  # Debug print
+        print(f"Error verifying token: {e}")  
         return render_template('verify.html', message="Verification link expired or invalid. Please register again.")
     
 
 
 @app.route('/welcome')
 def welcome():
-
-   # Render the welcome page with a greeting message.
     return render_template('welcome.html')
 
 
@@ -149,7 +162,7 @@ def show_all_users():
     conn = connect_db()
     cursor = conn.cursor()
 
-    # Fetch all users from the 'users' table
+    
     cursor.execute('SELECT * FROM users')
     users = cursor.fetchall()
 
