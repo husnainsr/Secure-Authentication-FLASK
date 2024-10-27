@@ -71,7 +71,7 @@ def index():
 def register():
     username = request.form['username']
     email = request.form['email']
-    password_hash = request.form['password']  # Normally, you'd hash the password here
+    password = request.form['password']  # Normally, you'd hash the password here
     registration_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Capture current timestamp
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
