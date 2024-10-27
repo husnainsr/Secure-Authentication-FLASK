@@ -73,6 +73,34 @@ def register():
     email = request.form['email']
     password_hash = request.form['password']  # Normally, you'd hash the password here
     registration_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Capture current timestamp
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+    setup_database()  # Ensure the database is set up before registering a user
+
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("INSERT INTO users (username, email, password_hash, registration_date) VALUES (?, ?, ?, ?)", 
+                       (username, email, hashed_password, registration_date))
+        conn.commit()
+
+        token = s.dumps(email, salt='email-confirm')
+        print(f"Token generated: {token}")  # Debug print
+        send_verification_email(email, token)
+
+        return render_template('register.html', message="Registration successful! Please check your email to verify your account.")
+    except sqlite3.Error as e:
+        return jsonify({'error': str(e)})
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+
+
+
 
     # Connect to the SQLite database
     conn = connect_db()
