@@ -20,9 +20,13 @@
         <button type="submit">Register</button>
     </form>
 
+    <!-- Display message if available -->
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
+
     <br>
 
-    <!-- Button to view all registered users -->
     <form action="/show_all_users" method="GET">
         <button type="submit">Show All Registered Users</button>
     </form>

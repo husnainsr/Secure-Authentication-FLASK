@@ -1,9 +1,19 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect, url_for
 import sqlite3
 from datetime import datetime
 import os
+import bcrypt
+from itsdangerous import URLSafeTimedSerializer
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+
 
 app = Flask(__name__)
+app.secret_key = 'qN7$k@4fX9b#4pR*3L2s&dZ9uH2m$eW' 
+
+s = URLSafeTimedSerializer(app.secret_key)
 
 # Set the absolute path to your SQLite database on the desktop
 DB_PATH = os.path.join(os.path.expanduser('~'), 'Desktop', 'secure_auth.db')
@@ -14,6 +24,40 @@ def connect_db():
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row  # Enable dictionary-like access to rows
     return connection
+
+
+def setup_database():
+    """
+    Set up the database and create the users table if it doesn't exist.
+    Implemented by Khadijah.
+    """
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    # Create users table with is_verified column
+    cursor.execute('''  
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            registration_date TEXT NOT NULL,
+            is_verified INTEGER DEFAULT 0
+        )
+    ''')
+
+    # Check if the is_verified column exists, if not add it
+    cursor.execute("PRAGMA table_info(users)")
+    columns = [column[1] for column in cursor.fetchall()]
+    if 'is_verified' not in columns:
+        cursor.execute('ALTER TABLE users ADD COLUMN is_verified INTEGER DEFAULT 0;')
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+
 
 # Route to render registration form
 @app.route('/')
