@@ -64,7 +64,29 @@ def setup_database():
 def index():
     return render_template('register.html')
 
+def send_verification_email(email, token):
+    sender_email = "djbravochamp817@gmail.com"
+    receiver_email = email
+    subject = "Please confirm your email"
+    link = url_for('verify_email', token=token, _external=True)
 
+    message = MIMEMultipart()
+    message["From"] = sender_email
+    message["To"] = receiver_email
+    message["Subject"] = subject
+
+    text = f"Hi,\n\nPlease click the following link to verify your email address:\n{link}\n\nThank you!"
+    message.attach(MIMEText(text, "plain"))
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender_email, "kwih hngn jlbm njdt")  # Replace with actual email and password
+            server.sendmail(sender_email, receiver_email, message.as_string())
+            print("Email sent successfully.")
+    except smtplib.SMTPException as e:
+        print(f"SMTP error occurred: {e}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 # Route to register a new user and insert into the database
 @app.route('/register', methods=['POST'])
@@ -87,6 +109,7 @@ def register():
 
         token = s.dumps(email, salt='email-confirm')
         print(f"Token generated: {token}")  # Debug print
+        send_verification_email(email, token)
 
         return render_template('register.html', message="Registration successful! Please check your email to verify your account.")
     except sqlite3.Error as e:
