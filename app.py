@@ -119,6 +119,24 @@ def register():
         conn.close()
 
 
+@app.route('/verify/<token>')
+def verify_email(token):
+    try:
+        # Set max_age to None to disable expiration
+        email = s.loads(token, salt='email-confirm', max_age=None)  
+        print(f"Token valid. Email: {email}")  # Debug print
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET is_verified = 1 WHERE email = ?", (email,))
+        conn.commit()
+
+        return render_template('verify.html', message="Email verified successfully! You may now log in.")
+    except Exception as e:
+        print(f"Error verifying token: {e}")  # Debug print
+        return render_template('verify.html', message="Verification link expired or invalid. Please register again.")
+    
+    
+
 @app.route('/show_all_users', methods=['GET'])
 def show_all_users():
     conn = connect_db()
