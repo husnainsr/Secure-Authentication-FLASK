@@ -87,7 +87,6 @@ def register():
 
         token = s.dumps(email, salt='email-confirm')
         print(f"Token generated: {token}")  # Debug print
-        send_verification_email(email, token)
 
         return render_template('register.html', message="Registration successful! Please check your email to verify your account.")
     except sqlite3.Error as e:
@@ -95,57 +94,6 @@ def register():
     finally:
         cursor.close()
         conn.close()
-
-
-
-
-
-
-
-    # Connect to the SQLite database
-    conn = connect_db()
-    cursor = conn.cursor()
-
-    # Create users table if it doesn't exist
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            email TEXT NOT NULL,
-            password_hash TEXT NOT NULL,
-            registration_date TEXT NOT NULL
-        )
-    ''')
-
-    # Create sessions table if it doesn't exist
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS sessions (
-            session_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            created_at TEXT NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )
-    ''')
-
-    # Insert new user into the 'users' table
-    sql = "INSERT INTO users (username, email, password_hash, registration_date) VALUES (?, ?, ?, ?)"
-    try:
-        cursor.execute(sql, (username, email, password_hash, registration_date))
-        user_id = cursor.lastrowid  # Get the ID of the newly inserted user
-        conn.commit()  # Ensure data is committed to the database
-
-        # Create a session for the newly registered user
-        session_created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        cursor.execute("INSERT INTO sessions (user_id, created_at) VALUES (?, ?)", (user_id, session_created_at))
-        conn.commit()  # Ensure session data is committed to the database
-
-        return jsonify({'message': 'User registered successfully!'})
-    except sqlite3.Error as e:
-        return jsonify({'error': str(e)})
-    finally:
-        cursor.close()
-        conn.close()
-
 
 
 @app.route('/show_all_users', methods=['GET'])
