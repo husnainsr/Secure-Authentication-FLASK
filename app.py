@@ -7,11 +7,13 @@ from itsdangerous import URLSafeTimedSerializer
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from dotenv import load_dotenv
 
+load_dotenv()
 
 
 app = Flask(__name__)
-app.secret_key = 'qN7$k@4fX9b#4pR*3L2s&dZ9uH2m$eW' 
+app.secret_key = os.getenv("SECRET_KEY")
 
 s = URLSafeTimedSerializer(app.secret_key)
 
@@ -55,8 +57,6 @@ def setup_database():
     conn.commit()
     cursor.close()
     conn.close()
-
-
 
 
 # Route to render registration form
@@ -117,6 +117,9 @@ def register():
     finally:
         cursor.close()
         conn.close()
+
+
+
 @app.route('/show_all_users', methods=['GET'])
 def show_all_users():
     conn = connect_db()
@@ -133,6 +136,9 @@ def show_all_users():
         return render_template('index.html', users=users)
     else:
         return jsonify({'message': 'No users found'})
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
