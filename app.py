@@ -42,7 +42,9 @@ def setup_database():
             email TEXT NOT NULL UNIQUE,
             password_hash TEXT NOT NULL,
             registration_date TEXT NOT NULL,
-            is_verified INTEGER DEFAULT 0
+            is_verified INTEGER DEFAULT 0,
+            otp TEXT,  
+            otp_expiration TEXT 
         )
     ''')
 
@@ -51,6 +53,10 @@ def setup_database():
     columns = [column[1] for column in cursor.fetchall()]
     if 'is_verified' not in columns:
         cursor.execute('ALTER TABLE users ADD COLUMN is_verified INTEGER DEFAULT 0;')
+    if 'otp' not in columns:
+        cursor.execute('ALTER TABLE users ADD COLUMN otp TEXT;')  
+    if 'otp_expiration' not in columns:
+        cursor.execute('ALTER TABLE users ADD COLUMN otp_expiration TEXT;')    
 
     conn.commit()
     cursor.close()
