@@ -100,6 +100,42 @@ def send_verification_email(email, token):
     except Exception as e:
         print(f"An error occurred: {e}")
 
+
+def send_otp_email(email, otp):
+    """Send OTP to the user's email address."""
+    sender_email = os.getenv("EMAIL")
+    receiver_email = email
+    subject = "Your OTP for Login"
+    body = f"""
+    Hi,
+
+    Your One-Time Password (OTP) for logging into your account is: {otp}
+
+    This OTP is valid for 5 minutes.
+
+    If you did not request this, please ignore this email.
+
+    Thank you!
+    """
+
+    message = MIMEMultipart()
+    message["From"] = sender_email
+    message["To"] = receiver_email
+    message["Subject"] = subject
+
+    message.attach(MIMEText(body, "plain"))
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            PASSWORD = os.getenv("PASSWORD")
+            server.login(sender_email, PASSWORD)  
+            server.sendmail(sender_email, receiver_email, message.as_string())
+            print("OTP email sent successfully.")
+    except smtplib.SMTPException as e:
+        print(f"SMTP error occurred while sending OTP: {e}")
+    except Exception as e:
+        print(f"An error occurred while sending OTP: {e}")
+        
 # Route to register a new user and insert into the database
 @app.route('/register', methods=['POST'])
 def register():
