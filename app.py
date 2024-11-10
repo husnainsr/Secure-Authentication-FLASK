@@ -18,7 +18,9 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 
 s = URLSafeTimedSerializer(app.secret_key)
-DB_PATH = os.path.join(os.path.expanduser('~'), 'Desktop', 'secure_auth.db')
+
+DB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database')
+DB_PATH = os.path.join(DB_DIR, 'secure_auth.db')
 
 def connect_db():
     connection = sqlite3.connect(DB_PATH)
