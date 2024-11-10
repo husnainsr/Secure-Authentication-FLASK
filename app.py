@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, session
 import sqlite3
 from datetime import datetime, timedelta
 import os
@@ -135,7 +135,7 @@ def send_otp_email(email, otp):
         print(f"SMTP error occurred while sending OTP: {e}")
     except Exception as e:
         print(f"An error occurred while sending OTP: {e}")
-        
+
 # Route to register a new user and insert into the database
 @app.route('/register', methods=['POST'])
 def register():
@@ -234,7 +234,7 @@ def login():
             cursor.close()
             conn.close()
 
-
+            send_otp_email(email, otp)
             session['otp_user'] = email
 
             flash("An OTP has been sent to your email. Please enter it below.", "info")
@@ -262,6 +262,30 @@ def verify_otp():
         cursor = conn.cursor()
         cursor.execute("SELECT otp, otp_expiration FROM users WHERE email = ?", (email,))
         user = cursor.fetchone()
+        if user:
+            stored_otp = user['otp']
+            otp_expiration = datetime.strptime(user['otp_expiration'], '%Y-%m-%d %H:%M:%S')
+
+            if datetime.now() > otp_expiration:
+                flash("OTP has expired. Please log in again.", "danger")
+                cursor.close()
+                conn.close()
+                session.pop('otp_user', None)  # Nibras – OTP Session Management
+                return redirect(url_for('login'))
+
+            if entered_otp == stored_otp:
+                flash("OTP verified successfully! You are now logged in.", "success")
+                cursor.execute("UPDATE users SET otp = NULL, otp_expiration = NULL WHERE email = ?", (email,))
+                conn.commit()
+                cursor.close()
+                conn.close()
+                session.pop('otp_user', None)  # Nibras – OTP Session Management
+                session['user'] = email  # Nibras – OTP Session Management
+                return redirect(url_for('welcome'))
+            else:
+                flash("Invalid OTP. Please try again.", "danger")
+        else:
+            flash("User not found.", "danger")
 
 
         cursor.close()
