@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import bcrypt
 from itsdangerous import URLSafeTimedSerializer
@@ -9,6 +9,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 import re
+import random
 
 load_dotenv()
 
@@ -60,6 +61,13 @@ def setup_database():
 @app.route('/')
 def index():
     return render_template('register.html')
+
+
+
+def generate_otp(length=6):
+    """Generate a random numeric OTP of specified length."""
+    return ''.join([str(random.randint(0, 9)) for _ in range(length)])
+
 
 def send_verification_email(email, token):
     sender_email = os.getenv("EMAIL")
