@@ -130,7 +130,7 @@ def register():
         cursor.execute("INSERT INTO users (username, email, password_hash, registration_date) VALUES (?, ?, ?, ?)", 
                        (username, email, hashed_password, registration_date))
         conn.commit()
-
+        
         token = s.dumps(email, salt='email-confirm')
         print(f"Token generated: {token}")  
         send_verification_email(email, token)
@@ -158,6 +158,37 @@ def verify_email(token):
         print(f"Error verifying token: {e}")  
         return render_template('verify.html', message="Verification link expired or invalid. Please register again.")
     
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Handle user login and initiate OTP process. Implemented by Khadijah and Husnain."""
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash']):
+            if not user['is_verified']:
+                flash("Please verify your email before logging in.", "warning")
+                return redirect(url_for('login'))
+            
+            # Husnain – OTP Generation
+            otp = generate_otp()
+            otp_expiration = datetime.now() + timedelta(minutes=5)
+            otp_expiration_str = otp_expiration.strftime('%Y-%m-%d %H:%M:%S')
+
+            flash("An OTP has been sent to your email. Please enter it below.", "info")
+            return redirect(url_for('verify_otp'))
+        else:
+            flash("Invalid email or password.", "danger")
+            return render_template('login.html')
+
+    return render_template('login.html')
 
 
 @app.route('/welcome')
