@@ -178,6 +178,8 @@ def login():
         cursor.close()
         conn.close()
 
+
+
         if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash']):
             if not user['is_verified']:
                 flash("Please verify your email before logging in.", "warning")
@@ -188,6 +190,17 @@ def login():
             otp_expiration = datetime.now() + timedelta(minutes=5)
             otp_expiration_str = otp_expiration.strftime('%Y-%m-%d %H:%M:%S')
 
+            # OTP session management
+            conn = connect_db()
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET otp = ?, otp_expiration = ? WHERE email = ?", (otp, otp_expiration_str, email))
+            conn.commit()
+            cursor.close()
+            conn.close()
+
+
+            session['otp_user'] = email
+
             flash("An OTP has been sent to your email. Please enter it below.", "info")
             return redirect(url_for('verify_otp'))
         else:
@@ -197,9 +210,44 @@ def login():
     return render_template('login.html')
 
 
+
+@app.route('/verify_otp', methods=['GET', 'POST'])
+def verify_otp():
+    """Handle OTP verification for 2FA."""
+    if 'otp_user' not in session:
+        flash("No OTP request found. Please log in.", "warning")
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        entered_otp = request.form['otp']
+        email = session['otp_user']
+
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT otp, otp_expiration FROM users WHERE email = ?", (email,))
+        user = cursor.fetchone()
+
+
+        cursor.close()
+        conn.close()
+        return render_template('verify_otp.html')
+
+    return render_template('verify_otp.html')
+
+
+
 @app.route('/welcome')
 def welcome():
     return render_template('welcome.html')
+
+
+
+@app.route('/logout')
+def logout():
+    """Log the user out by clearing the session."""
+    session.clear()
+    flash("You have been logged out.", "info")
+    return redirect(url_for('login'))
 
 
 @app.route('/show_all_users', methods=['GET'])
