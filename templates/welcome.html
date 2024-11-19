@@ -3,24 +3,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome</title>
-<!-- adding my own bootstrap and css to beautify the frontend-->>
+    <title>Welcome - Secure Auth</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #4a4a4a;
+        }
+        
+        .welcome-container {
+            padding: 2rem 0;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            border: none;
+            transition: transform 0.3s ease;
+            margin-bottom: 2rem;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .profile-card {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .profile-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: white;
+            font-size: 3rem;
+        }
+        
+        .welcome-title {
+            color: #4a4a4a;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .stats-card {
+            padding: 1.5rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 10px;
+            background: rgba(102,126,234,0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .btn-custom {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0.8rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(to right, #ff6b6b, #ee5253);
+            border: none;
+            border-radius: 10px;
+            padding: 0.8rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(238,82,83,0.4);
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .action-card {
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .action-card:hover {
+            background: rgba(102,126,234,0.1);
+            border-radius: 10px;
+        }
+        
+        .action-icon {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        
+        .last-login {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 1rem;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="mt-5">Welcome, {{ user }}!</h1>
-        <p class="lead">You have successfully logged in.</p>
-        <a href="/logout" class="btn btn-danger">Logout</a>
+    <div class="container welcome-container">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card profile-card animate__animated animate__fadeIn">
+                    <div class="profile-image">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h2 class="welcome-title">Welcome, {{ user }}!</h2>
+                    <p class="text-muted">Premium Member</p>
+                    <div class="last-login">
+                        <i class="fas fa-clock mr-2"></i>Last login: Today at 10:30 AM
+                    </div>
+                    <hr>
+                    <a href="/logout" class="btn btn-danger mt-3">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <div class="card stats-card animate__animated animate__fadeIn">
+                    <h4 class="mb-4"><i class="fas fa-chart-line mr-2"></i>Your Activity</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="stat-item">
+                                <div class="stat-number">30</div>
+                                <div class="stat-label">Days Active</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-item">
+                                <div class="stat-number">15</div>
+                                <div class="stat-label">Completed Tasks</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-item">
+                                <div class="stat-number">95%</div>
+                                <div class="stat-label">Security Score</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h4 class="mt-4 mb-3"><i class="fas fa-bolt mr-2"></i>Quick Actions</h4>
+                    <div class="quick-actions">
+                        <div class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-key"></i>
+                            </div>
+                            <h5>Change Password</h5>
+                        </div>
+                        <div class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h5>Security Settings</h5>
+                        </div>
+                        <div class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-user-cog"></i>
+                            </div>
+                            <h5>Profile Settings</h5>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-4 animate__animated animate__fadeIn">
+                    <div class="card-body">
+                        <h4 class="mb-3"><i class="fas fa-bell mr-2"></i>Recent Notifications</h4>
+                        <div class="notification-item d-flex align-items-center mb-3">
+                            <i class="fas fa-shield-alt mr-3 text-success"></i>
+                            <div>
+                                <strong>Security Update</strong>
+                                <p class="mb-0 text-muted">Your account security was automatically enhanced</p>
+                            </div>
+                        </div>
+                        <div class="notification-item d-flex align-items-center">
+                            <i class="fas fa-check-circle mr-3 text-primary"></i>
+                            <div>
+                                <strong>Login Successful</strong>
+                                <p class="mb-0 text-muted">Welcome back to your secure dashboard</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
-        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add hover effect to action cards
+        document.querySelectorAll('.action-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-LtrjvnR4/JqsZHIU0K+f54NILdXIOewIh4gBtwW0tKQHsmXKp4YfRvH+8abtTE1Pi" crossorigin="anonymous">
-    </script>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

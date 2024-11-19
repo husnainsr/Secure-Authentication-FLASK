@@ -10,17 +10,50 @@ from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 import re
 import random
+from functools import wraps
+import time
+from collections import defaultdict
 
 load_dotenv()
 
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
+app.permanent_session_lifetime = timedelta(minutes=30)  # Set session timeout to 30 minutes
 
 s = URLSafeTimedSerializer(app.secret_key)
 
 DB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database')
 DB_PATH = os.path.join(DB_DIR, 'secure_auth.db')
+
+LOGIN_ATTEMPTS = defaultdict(list)
+MAX_ATTEMPTS = 5
+LOCKOUT_TIME = 900  # 15 minutes in seconds
+PASSWORD_BLACKLIST = {'password123', '12345678', 'qwerty123', 'admin123'}  # Add more common passwords
+
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "your_secure_admin_password")  # Set this in your .env file
+
+def is_password_compromised(password):
+    """Check if password is in common password list or too simple"""
+    if password.lower() in PASSWORD_BLACKLIST:
+        return True
+    # Check for keyboard patterns
+    keyboard_patterns = ['qwerty', 'asdfgh', '123456', '987654']
+    return any(pattern in password.lower() for pattern in keyboard_patterns)
+
+def check_rate_limit(ip_address):
+    """Rate limiting function"""
+    current_time = time.time()
+    # Remove attempts older than lockout time
+    LOGIN_ATTEMPTS[ip_address] = [
+        attempt for attempt in LOGIN_ATTEMPTS[ip_address] 
+        if current_time - attempt < LOCKOUT_TIME
+    ]
+    
+    if len(LOGIN_ATTEMPTS[ip_address]) >= MAX_ATTEMPTS:
+        return False
+    LOGIN_ATTEMPTS[ip_address].append(current_time)
+    return True
 
 def connect_db():
     connection = sqlite3.connect(DB_PATH)
@@ -77,80 +110,177 @@ def generate_otp(length=6):
     return ''.join([str(random.randint(0, 9)) for _ in range(length)])
 
 
-def send_verification_email(email, token):
-    sender_email = os.getenv("EMAIL")
-    receiver_email = email
-    subject = "Please confirm your email"
-    link = url_for('verify_email', token=token, _external=True)
-
-    message = MIMEMultipart()
-    message["From"] = sender_email
-    message["To"] = receiver_email
-    message["Subject"] = subject
-
-    text = f"Hi,\n\nPlease click the following link to verify your email address:\n{link}\n\nThank you!"
-    message.attach(MIMEText(text, "plain"))
-
-    try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            PASSWORD=os.getenv("PASSWORD")
-            server.login(sender_email, PASSWORD)  
-            server.sendmail(sender_email, receiver_email, message.as_string())
-            print("Email sent successfully.")
-    except smtplib.SMTPException as e:
-        print(f"SMTP error occurred: {e}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-
 def send_otp_email(email, otp):
-    """Send OTP to the user's email address."""
+    """Send OTP to the user's email address with a beautiful template."""
     sender_email = os.getenv("EMAIL")
     receiver_email = email
-    subject = "Your OTP for Login"
-    body = f"""
-    Hi,
+    subject = "🔐 Your Secure Auth Verification Code"
 
-    Your One-Time Password (OTP) for logging into your account is: {otp}
-
-    This OTP is valid for 5 minutes.
-
-    If you did not request this, please ignore this email.
-
-    Thank you!
+    # HTML Email Template
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: 'Segoe UI', Arial, sans-serif;
+                line-height: 1.6;
+                color: #333333;
+            }}
+            .container {{
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf3 100%);
+                border-radius: 10px;
+            }}
+            .header {{
+                text-align: center;
+                padding: 20px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-radius: 10px 10px 0 0;
+            }}
+            .content {{
+                padding: 30px;
+                background: white;
+                border-radius: 0 0 10px 10px;
+            }}
+            .otp-box {{
+                background: #f8f9fa;
+                padding: 15px;
+                border-radius: 8px;
+                text-align: center;
+                font-size: 32px;
+                letter-spacing: 5px;
+                margin: 20px 0;
+                font-weight: bold;
+                color: #4a4a4a;
+            }}
+            .footer {{
+                text-align: center;
+                margin-top: 20px;
+                font-size: 12px;
+                color: #666;
+            }}
+            .warning {{
+                color: #dc3545;
+                font-size: 14px;
+                margin-top: 15px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🔒 Secure Auth</h1>
+            </div>
+            <div class="content">
+                <h2>Hello! 👋</h2>
+                
+                <p>Welcome to our secure community! 🌟</p>
+                
+                <p>Here's your verification code to complete your registration:</p>
+                
+                <div class="otp-box">
+                    {otp}
+                </div>
+                
+                <p>⚡ This code will expire in 5 minutes for your security.</p>
+                
+                <p>Here's what you need to know:</p>
+                <ul>
+                    <li>🔑 Keep this code private</li>
+                    <li>⏰ Act quickly - it expires soon!</li>
+                    <li>🚫 Never share this code with anyone</li>
+                    <li>❓ Our support team will never ask for this code</li>
+                </ul>
+                
+                <p class="warning">
+                    ⚠️ If you didn't request this code, please ignore this email.
+                </p>
+                
+                <p>Stay secure! 🛡️</p>
+                
+                <div class="footer">
+                    <p>🔒 Secure Auth - Protecting Your Digital World</p>
+                    <p>This is an automated message, please do not reply.</p>
+                    <p>© {datetime.now().year} Secure Auth. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
     """
 
-    message = MIMEMultipart()
-    message["From"] = sender_email
+    # Plain text version for email clients that don't support HTML
+    text_content = f"""
+    🔒 Secure Auth - Verification Code
+
+    Hello! 👋
+
+    Your verification code is: {otp}
+
+    ⚠️ This code will expire in 5 minutes.
+    
+    🔑 Keep this code private and never share it with anyone.
+    
+    If you didn't request this code, please ignore this email.
+
+    Stay secure! 🛡️
+    """
+
+    message = MIMEMultipart("alternative")
+    message["From"] = f"Secure Auth <{sender_email}>"
     message["To"] = receiver_email
     message["Subject"] = subject
 
-    message.attach(MIMEText(body, "plain"))
+    # Add plain-text and HTML versions to the message
+    message.attach(MIMEText(text_content, "plain"))
+    message.attach(MIMEText(html_content, "html"))
 
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             PASSWORD = os.getenv("PASSWORD")
-            server.login(sender_email, PASSWORD)  
+            server.login(sender_email, PASSWORD)
             server.sendmail(sender_email, receiver_email, message.as_string())
-            print("OTP email sent successfully.")
-    except smtplib.SMTPException as e:
-        print(f"SMTP error occurred while sending OTP: {e}")
+            print("✅ OTP email sent successfully!")
     except Exception as e:
-        print(f"An error occurred while sending OTP: {e}")
+        print(f"❌ Error sending OTP email: {e}")
 
 # Route to register a new user and insert into the database
 @app.route('/register', methods=['POST'])
 def register():
-    username = request.form['username']
-    email = request.form['email']
-    password = request.form['password']  
-    registration_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  
+    """Enhanced registration with additional security checks"""
+    username = request.form['username'].strip()
+    email = request.form['email'].strip()
+    password = request.form['password']
+    registration_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    # Password Requirenments
-    if len(password) < 8 or not re.search(r'[A-Z]', password) or not re.search(r'[a-z]', password) or not re.search(r'\d', password):
-        flash("Password must be at least 8 characters, contain uppercase and lowercase letters, and include a number.", "danger")
+    # IP-based rate limiting
+    if not check_rate_limit(request.remote_addr):
+        flash("Too many registration attempts. Please try again later.", "danger")
+        return render_template('register.html'), 429
+
+    # Enhanced username validation
+    if not re.match(r'^[a-zA-Z0-9_-]{3,32}$', username):
+        flash("Username must be 3-32 characters and contain only letters, numbers, underscores, and hyphens.", "danger")
         return render_template('register.html')
-    
+
+    # Enhanced password requirements
+    if (len(password) < 12 or  # Increased minimum length
+        not re.search(r'[A-Z]', password) or 
+        not re.search(r'[a-z]', password) or 
+        not re.search(r'\d', password) or
+        not re.search(r'[!@#$%^&*(),.?":{}|<>]', password)):  # Special characters
+        flash("Password must be at least 12 characters and contain uppercase, lowercase, numbers, and special characters.", "danger")
+        return render_template('register.html')
+
+    # Check for compromised passwords
+    if is_password_compromised(password):
+        flash("This password is too common. Please choose a stronger password.", "danger")
+        return render_template('register.html')
+
     # Email verification
     email_pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
     if not re.match(email_pattern, email):
@@ -164,6 +294,11 @@ def register():
         return render_template('register.html')
 
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    
+    # Generate OTP for registration verification
+    otp = generate_otp()
+    otp_expiration = datetime.now() + timedelta(minutes=5)
+    otp_expiration_str = otp_expiration.strftime('%Y-%m-%d %H:%M:%S')
 
     setup_database()  # Ensure the database is set up before registering a user
 
@@ -171,15 +306,18 @@ def register():
     cursor = conn.cursor()
 
     try:
-        cursor.execute("INSERT INTO users (username, email, password_hash, registration_date) VALUES (?, ?, ?, ?)", 
-                    (username, email, hashed_password, registration_date))
+        cursor.execute("""
+            INSERT INTO users 
+            (username, email, password_hash, registration_date, otp, otp_expiration) 
+            VALUES (?, ?, ?, ?, ?, ?)
+            """, 
+            (username, email, hashed_password, registration_date, otp, otp_expiration_str))
         conn.commit()
         
-        token = s.dumps(email, salt='email-confirm')
-        print(f"Token generated: {token}")  
-        send_verification_email(email, token)
-        flash("Registration successful! Please check your email to verify your account.", "info")
-        return render_template('register.html', message="Registration successful! Please check your email to verify your account.")
+        send_otp_email(email, otp)
+        session['registration_email'] = email
+        flash("Registration initiated! Please check your email for OTP to verify your account.", "info")
+        return redirect(url_for('verify_registration'))
     except sqlite3.IntegrityError:
         flash("This email address is already registered. Please use a different email or log in.", "danger")
         return render_template('register.html')
@@ -189,64 +327,117 @@ def register():
         cursor.close()
         conn.close()
 
+@app.route('/verify_registration', methods=['GET', 'POST'])
+def verify_registration():
+    """Handle OTP verification for registration."""
+    if 'registration_email' not in session:
+        flash("No pending registration found.", "warning")
+        return redirect(url_for('register'))
 
-@app.route('/verify/<token>')
-def verify_email(token):
-    try:
-        email = s.loads(token, salt='email-confirm', max_age=None)  
-        print(f"Token valid. Email: {email}")  
-        conn = connect_db()
-        cursor = conn.cursor()
-        cursor.execute("UPDATE users SET is_verified = 1 WHERE email = ?", (email,))
-        conn.commit()
-
-        return render_template('verify.html', message="Email verified successfully! You may now log in.")
-    except Exception as e:
-        print(f"Error verifying token: {e}")  
-        return render_template('verify.html', message="Verification link expired or invalid. Please register again.")
-    
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    """Handle user login and initiate OTP process. Implemented by Khadijah and Husnain."""
     if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
+        entered_otp = request.form['otp']
+        email = session['registration_email']
 
         conn = connect_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+        cursor.execute("SELECT otp, otp_expiration FROM users WHERE email = ?", (email,))
         user = cursor.fetchone()
+        
+        if user:
+            stored_otp = user['otp']
+            otp_expiration = datetime.strptime(user['otp_expiration'], '%Y-%m-%d %H:%M:%S')
+
+            if datetime.now() > otp_expiration:
+                flash("OTP has expired. Please register again.", "danger")
+                cursor.close()
+                conn.close()
+                session.pop('registration_email', None)
+                return redirect(url_for('register'))
+
+            if entered_otp == stored_otp:
+                cursor.execute("""
+                    UPDATE users 
+                    SET is_verified = 1, otp = NULL, otp_expiration = NULL 
+                    WHERE email = ?
+                    """, (email,))
+                conn.commit()
+                session.pop('registration_email', None)
+                flash("Email verified successfully! You may now log in.", "success")
+                return redirect(url_for('login'))
+            else:
+                flash("Invalid OTP. Please try again.", "danger")
+        
         cursor.close()
         conn.close()
+        return render_template('verify_registration.html')
 
+    return render_template('verify_registration.html')
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Enhanced login with additional security"""
+    if request.method == 'POST':
+        email = request.form['email'].strip()
+        password = request.form['password']
+        
+        # IP-based rate limiting
+        if not check_rate_limit(request.remote_addr):
+            flash("Account temporarily locked due to too many login attempts. Please try again later.", "danger")
+            return render_template('login.html'), 429
 
-        if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash']):
-            if not user['is_verified']:
-                flash("Please verify your email before logging in.", "warning")
-                return redirect(url_for('login'))
-            
-            # Husnain – OTP Generation
-            otp = generate_otp()
-            otp_expiration = datetime.now() + timedelta(minutes=5)
-            otp_expiration_str = otp_expiration.strftime('%Y-%m-%d %H:%M:%S')
+        conn = connect_db()
+        cursor = conn.cursor()
+        
+        try:
+            # Use parameterized query to prevent SQL injection
+            cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+            user = cursor.fetchone()
 
-            # OTP session management
-            conn = connect_db()
-            cursor = conn.cursor()
-            cursor.execute("UPDATE users SET otp = ?, otp_expiration = ? WHERE email = ?", (otp, otp_expiration_str, email))
-            conn.commit()
+            if user:
+                # Add delay to prevent timing attacks
+                time.sleep(0.1)
+                
+                if bcrypt.checkpw(password.encode('utf-8'), user['password_hash']):
+                    if not user['is_verified']:
+                        flash("Please verify your email before logging in.", "warning")
+                        return redirect(url_for('login'))
+
+                    # Clear failed login attempts on successful login
+                    LOGIN_ATTEMPTS[request.remote_addr].clear()
+                    
+                    # Generate and send OTP
+                    otp = generate_otp()
+                    otp_expiration = datetime.now() + timedelta(minutes=5)
+                    otp_expiration_str = otp_expiration.strftime('%Y-%m-%d %H:%M:%S')
+
+                    cursor.execute("""
+                        UPDATE users 
+                        SET otp = ?, 
+                            otp_expiration = ?,
+                            last_login_attempt = CURRENT_TIMESTAMP
+                        WHERE email = ?
+                    """, (otp, otp_expiration_str, email))
+                    conn.commit()
+
+                    send_otp_email(email, otp)
+                    session['otp_user'] = email
+                    
+                    flash("An OTP has been sent to your email.", "info")
+                    return redirect(url_for('verify_otp'))
+                else:
+                    flash("Invalid email or password.", "danger")
+            else:
+                # Use same message as invalid password to prevent user enumeration
+                flash("Invalid email or password.", "danger")
+
+        except Exception as e:
+            flash("An error occurred. Please try again.", "danger")
+            print(f"Login error: {str(e)}")  # Log the actual error securely
+        finally:
             cursor.close()
             conn.close()
 
-            send_otp_email(email, otp)
-            session['otp_user'] = email
-
-            flash("An OTP has been sent to your email. Please enter it below.", "info")
-            return redirect(url_for('verify_otp'))
-        else:
-            flash("Invalid email or password.", "danger")
-            return render_template('login.html')
+        return render_template('login.html')
 
     return render_template('login.html')
 
@@ -284,8 +475,10 @@ def verify_otp():
                 conn.commit()
                 cursor.close()
                 conn.close()
-                session.pop('otp_user', None)  # Nibras – OTP Session Management
-                session['user'] = email  # Nibras – OTP Session Management
+                session.pop('otp_user', None)
+                session.permanent = True  # Enable session expiry
+                session['user'] = email
+                session['last_activity'] = datetime.now().isoformat()  # Set initial activity timestamp
                 return redirect(url_for('welcome'))
             else:
                 flash("Invalid OTP. Please try again.", "danger")
@@ -307,6 +500,26 @@ def welcome():
     if 'user' not in session:
         flash("Please log in to access this page.", "warning")
         return redirect(url_for('login'))
+    
+    # Additional security check to ensure proper authentication flow
+    conn = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT is_verified FROM users WHERE email = ?", (session['user'],))
+        user = cursor.fetchone()
+        
+        if not user or not user['is_verified']:
+            session.clear()  # Clear invalid session
+            flash("Invalid access. Please login properly.", "danger")
+            return redirect(url_for('login'))
+            
+    except sqlite3.Error as e:
+        flash("An error occurred. Please try again.", "danger")
+        return redirect(url_for('login'))
+    finally:
+        cursor.close()
+        conn.close()
+        
     return render_template('welcome.html', user=session['user'])
 
 
@@ -336,9 +549,141 @@ def show_all_users():
     else:
         return jsonify({'message': 'No users found'})
 
+# Add security headers middleware
+@app.after_request
+def add_security_headers(response):
+    """Add security headers to every response"""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Content-Security-Policy'] = "default-src 'self'"
+    return response
 
+# Add this to your database setup
+def enhance_database_security():
+    """Add security-related columns to the database"""
+    conn = connect_db()
+    cursor = conn.cursor()
+    
+    try:
+        # Check if columns exist first
+        cursor.execute("PRAGMA table_info(users)")
+        columns = [column[1] for column in cursor.fetchall()]
+        
+        # Add last_login_attempt column if it doesn't exist
+        if 'last_login_attempt' not in columns:
+            cursor.execute("""
+                ALTER TABLE users ADD COLUMN 
+                last_login_attempt TIMESTAMP
+            """)
+        
+        # Add failed_login_attempts column if it doesn't exist
+        if 'failed_login_attempts' not in columns:
+            cursor.execute("""
+                ALTER TABLE users ADD COLUMN 
+                failed_login_attempts INTEGER DEFAULT 0
+            """)
+            
+        conn.commit()
+    except sqlite3.Error as e:
+        print(f"Database enhancement error: {str(e)}")
+    finally:
+        cursor.close()
+        conn.close()
 
+# Admin authentication decorator
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        admin_token = session.get('admin_token')
+        if not admin_token or admin_token != ADMIN_PASSWORD:
+            flash('Admin access required', 'danger')
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# Admin login route
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        password = request.form.get('password')
+        if password == ADMIN_PASSWORD:
+            session['admin_token'] = ADMIN_PASSWORD
+            flash('Admin access granted', 'success')
+            return redirect(url_for('admin_dashboard'))
+        flash('Invalid admin password', 'danger')
+    return render_template('admin_login.html')
+
+# Admin dashboard route
+@app.route('/admin/dashboard')
+@admin_required
+def admin_dashboard():
+    conn = connect_db()
+    cursor = conn.cursor()
+    
+    # Get database statistics
+    cursor.execute("SELECT COUNT(*) FROM users")
+    user_count = cursor.fetchone()[0]
+    
+    cursor.execute("SELECT COUNT(*) FROM users WHERE is_verified = 1")
+    verified_count = cursor.fetchone()[0]
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('admin_dashboard.html', 
+                         user_count=user_count, 
+                         verified_count=verified_count)
+
+# Database reset route
+@app.route('/admin/reset-database', methods=['POST'])
+@admin_required
+def reset_database():
+    try:
+        conn = connect_db()
+        cursor = conn.cursor()
+        
+        # Delete all records from the users table
+        cursor.execute("DELETE FROM users")
+        
+        # Reset the auto-increment counter
+        cursor.execute("DELETE FROM sqlite_sequence WHERE name='users'")
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        # Clear all login attempts
+        LOGIN_ATTEMPTS.clear()
+        
+        flash('Database has been reset successfully', 'success')
+    except Exception as e:
+        flash(f'Error resetting database: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin_dashboard'))
+
+@app.before_request
+def before_request():
+    """Check session timeout before each request"""
+    if 'user' in session:
+        # Check if last activity timestamp exists
+        if 'last_activity' not in session:
+            session.clear()
+            flash("Session expired. Please login again.", "warning")
+            return redirect(url_for('login'))
+        
+        # Check if session has expired (5 minutes of inactivity)
+        last_activity = datetime.fromisoformat(session['last_activity'])
+        if datetime.now() - last_activity > timedelta(minutes=5):
+            session.clear()
+            flash("Session expired due to inactivity. Please login again.", "warning")
+            return redirect(url_for('login'))
+        
+        # Update last activity timestamp
+        session['last_activity'] = datetime.now().isoformat()
 
 if __name__ == '__main__':
     setup_database()
-    app.run(debug=True)
+    enhance_database_security()
+    app.run(debug=False)  # Set debug to False in production

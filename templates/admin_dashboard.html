@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Secure Auth</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #4a4a4a;
+        }
+        
+        .welcome-container {
+            padding: 2rem 0;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            border: none;
+            transition: transform 0.3s ease;
+            margin-bottom: 2rem;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .profile-card {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .profile-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: white;
+            font-size: 3rem;
+        }
+        
+        .welcome-title {
+            color: #4a4a4a;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .stats-card {
+            padding: 1.5rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 10px;
+            background: rgba(102,126,234,0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .btn-custom {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0.8rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(to right, #ff6b6b, #ee5253);
+            border: none;
+            border-radius: 10px;
+            padding: 0.8rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(238,82,83,0.4);
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .action-card {
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .action-card:hover {
+            background: rgba(102,126,234,0.1);
+            border-radius: 10px;
+        }
+        
+        .action-icon {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        
+        .last-login {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card animate__animated animate__fadeIn">
+                    <div class="card-body p-5">
+                        <h2 class="text-center mb-4">
+                            <i class="fas fa-tools text-primary"></i>
+                            Admin Dashboard
+                        </h2>
+                        
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} animate__animated animate__fadeInDown">
+                                {{ message }}
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                        {% endwith %}
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h3 class="display-4">{{ user_count }}</h3>
+                                        <p class="text-muted">Total Users</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h3 class="display-4">{{ verified_count }}</h3>
+                                        <p class="text-muted">Verified Users</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <form action="{{ url_for('reset_database') }}" method="POST" 
+                                  onsubmit="return confirm('Are you sure you want to reset the database? This action cannot be undone.');">
+                                <button type="submit" class="btn btn-danger btn-lg">
+                                    <i class="fas fa-trash-alt mr-2"></i>Reset Database
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
