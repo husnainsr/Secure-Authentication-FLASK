@@ -6,6 +6,15 @@ Welcome to **SecureAuth**, a robust authentication system designed to provide a 
 
 ## 🚀 Project Overview
 
+![Registeration Page](/images/register.jpeg)
+![Login Page](/images/login.jpeg)
+![Verify Email OTP](/images/otp1.jpeg)
+![Verfiy Login OTP](/images/otp2.jpeg)
+![OTP Email](/images/email.jpeg)
+![Home Page](/images/home.jpeg)
+![Admin Login](/images/admin.jpeg)
+![Admin Page](/images/admin1.jpeg)
+
 **SecureAuth** is a web application that enhances user authentication by integrating two-factor authentication (2FA) through email-based OTP verification. The project ensures secure user login with encrypted password storage and an additional OTP verification layer.
 
 ### Key Features
